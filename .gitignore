@@ -3,6 +3,9 @@
 .prompt_history
 .chat_turns
 streamlit_apps
+.vscode
+anthropic
+streamlit.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
