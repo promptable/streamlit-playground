@@ -2,6 +2,7 @@
 .env.secret
 .prompt_history
 .chat_turns
+streamlit_apps
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
