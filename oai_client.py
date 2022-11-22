@@ -35,15 +35,15 @@ INSERT_API_TOKEN = "[insert]"
 
 def postprocess_completion_response(response: Dict) -> Dict:
     """Postprocess OAI completion API response.
-    
+
     Standardize the response format and add additional fields.
     Lets us add new LLMs without changing the API.
     """
     return {
         "response": response,
         "num_tokens": response["usage"]["total_tokens"],
-        "all_answers_text": [a["text"] for a in response["choices"]],
-        "top_answer_text": response["choices"][0]["text"],
+        "all_completions": [a["text"] for a in response["choices"]],
+        "completion": response["choices"][0]["text"],
         "latency": response["latency"],
         "usage": response["usage"],
     }
@@ -53,7 +53,7 @@ class OAIClient:
     def __init__(
         self,
         api_key: str,
-        organization_id: str = None,
+        organization_id: Union[str, None] = None,
         cache: Union[diskcache.Cache, None] = None,
     ):
         self._disk_cache = cache
@@ -137,7 +137,7 @@ class OAIClient:
         best_of: int = 1,
         top_p: int = 1,
         temperature: float = 0,
-        logprobs: int | None = None,
+        logprobs: Union[int, None] = None,
         max_tokens: int = 256,
         frequency_penalty: int = 0,
         presence_penalty: int = 0,
@@ -147,6 +147,8 @@ class OAIClient:
         mode: str = "complete",  # or insert
     ) -> Dict:
         """Call OpenAI Completion API.
+
+        TODO(bfortuner): Add Streaming
 
         See https://beta.openai.com/docs/api-reference/completions for param descriptions.
 
@@ -205,7 +207,7 @@ class OAIClient:
 
 if __name__ == "__main__":
     """Example Usage of OAIClient.
-    
+
     Usage:
         python oai_client.py --prompt "Hello, how are you?" --model "text-davinci-002"
     """
@@ -217,8 +219,9 @@ if __name__ == "__main__":
     parser.add_argument("--max-tokens", type=int, default=100)
     parser.add_argument("--cache-dir")
     args = parser.parse_args()
-    
+
     from settings import Settings
+
     cfg = Settings.from_env_file()
 
     cache = None

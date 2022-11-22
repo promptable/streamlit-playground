@@ -8,7 +8,7 @@ import time
 from typing import List, Dict
 import uuid
 
-import streamlit as st
+import playground_streamlit as st
 from stqdm import stqdm
 
 
