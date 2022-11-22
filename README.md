@@ -36,13 +36,13 @@ pip3 install -r requirements.txt
 
 ```bash
 # Run the streamlit app
-streamlit run streamlit.py
+streamlit run playground_streamlit.py
 
 # Should open a new tab in your browser at
 http://localhost:8501/
 
 # If running on remote box (EC2, etc). Expose the port, then:
-streamlit run --server.headless true streamlit.py --server.port 8502
+streamlit run --server.headless true playground_streamlit.py --server.port 8502
 ```
 
 ## Adding passwords
