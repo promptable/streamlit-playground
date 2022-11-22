@@ -5,6 +5,11 @@ streamlit-aggrid==0.3.3
 stqdm
 openai
 tenacity
+websocket
+httpx
+trio-websocket
+pydantic
+trio
 
 # Dev
 black

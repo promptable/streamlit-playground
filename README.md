@@ -1,10 +1,10 @@
-# Streamlit Playground (GPT3, etc)
+# Streamlit Playground (e.g. OpenAI Playground)
 
-(Attempt) to replicate OAI playground in Streamlit, but with additional features like testing/saving batch inputs.
+(Attempt) to replicate OpenAI playground in Streamlit, but with additional features like running batches of inputs.
 
 ## Setup
 
-Requires Python 3.6+. Tested on Mac M1.
+Requires Python 3.6+. Tested on Mac M1 Python 3.9.
 
 1. Create an account with OpenAI and add your API key to `.env.secrets`
 
@@ -21,7 +21,15 @@ pip3 install -r requirements.txt
 pip3 install virtualenv
 virtualenv .venv --python python3
 source .venv/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
+```
+
+NOTE: If you're on Mac M1, and get stuck installing gevent / grpcio, try this:
+
+```bash
+pip3 install --no-cache-dir --upgrade --force-reinstall -Iv grpcio gevent
+
+pip3 install -r requirements.txt
 ```
 
 3. Run streamlit

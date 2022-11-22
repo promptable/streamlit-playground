@@ -6,6 +6,7 @@ streamlit_apps
 .vscode
 anthropic
 streamlit.py
+anthro.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

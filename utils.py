@@ -1,4 +1,7 @@
-"""Utility functions for the Streamlit apps."""
+"""Utility functions for the Streamlit apps.
+
+TODO(bfortuner): Add S3 support.
+"""
 import json
 import os
 import time
@@ -42,6 +45,11 @@ def load_prompt(prompt_id: str, prompt_dir: str = "./prompts/") -> dict:
         "prompt": open(prompt_fpath).read(),
         "inputs": json.load(open(inputs_fpath)),
     }
+
+
+def list_prompts(prompt_dir: str = "./prompts/") -> List[str]:
+    """List all prompts in the prompt directory."""
+    return sorted(os.listdir(prompt_dir))
 
 
 def check_password(debug=False):
