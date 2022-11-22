@@ -1,6 +1,11 @@
-click
 diskcache
 python-dotenv
+streamlit==1.13.0
+streamlit-aggrid==0.3.3
+stqdm
 openai
-prompt_toolkit
 tenacity
+
+# Dev
+black
+isort

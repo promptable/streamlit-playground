@@ -1,183 +1,103 @@
-"""Utility functions for the CLI interface."""
-import html
+"""Utility functions for the Streamlit apps."""
 import json
 import os
-import logging
 import uuid
-from typing import Callable, Dict, List, Tuple
 
-from prompt_toolkit import PromptSession
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-from prompt_toolkit.completion import NestedCompleter
-from prompt_toolkit.history import FileHistory
-from prompt_toolkit.styles import Style
-from prompt_toolkit import HTML
-from prompt_toolkit import print_formatted_text as print
-
-from oai_client import OAIClient
+import streamlit as st
+from stqdm import stqdm
 
 
-def get_default_style():
-    return Style.from_dict(
-        {
-            "": "#ffffff",  # default
-            "user-prompt": "#884444",
-            "user-text": "#ffffff",
-            "bot-prompt": "#00aa00",
-            "bot-text": "#A9A9A9",
-        }
-    )
+def make_prompt_id(prompt_name: str):
+    """Make a prompt ID from a chat name."""
+    return f"{prompt_name}_{str(uuid.uuid1())[:8]}"
 
 
-def get_default_completer():
-    return NestedCompleter.from_nested_dict(
-        {
-            "show": {"history": None, "commands": {"interface": {"brief"}}},
-            "clear": {
-                "history": None,
-            },
-            "exit": None,
-            "quit": None,
-        }
-    )
-
-
-def init_prompt_session(prompt_history_path: str, style=None, completer=None):
-    # https://python-prompt-toolkit.readthedocs.io/en/stable/pages/dialogs.html
-    # Yes/No, or List of options, etc
-    # https://python-prompt-toolkit.readthedocs.io/en/stable/pages/asking_for_input.html
-    # Custom WordCompleter, FuzzyCompleter
-    if style is None:
-        style = get_default_style()
-    if completer is None:
-        completer = get_default_completer()
-
-    kwargs = dict(
-        auto_suggest=AutoSuggestFromHistory(),
-        completer=completer,
-        style=style,
-    )
-    if prompt_history_path:
-        kwargs["history"] = FileHistory(prompt_history_path)
-
-    return PromptSession(**kwargs)
-
-
-def make_chat_id(chat_name: str):
-    """Make a chat ID from a chat name.
-    
-    Used to restore a chat from a previous session.
-    """
-    return f"{chat_name}_{str(uuid.uuid1())[:8]}"
-
-
-def save_turns(
-    chat_id: str,
-    turns: List[Dict],
-    user_name: str,
-    agent_name: str,
-    turns_dir: str,
+def save_prompt(
+    prompt_id: str,
+    prompt: str,
+    params: dict,
+    inputs: dict,
+    prompt_dir: str = "./prompts/",
 ):
-    """Save a chat transcript to disk.
-    
-    Used to restore a chat from a previous session.
-    """
-    fpath = os.path.join(turns_dir, chat_id + ".json")
-    turns_dict = {
-        "chat_id": chat_id,
-        "turns": turns,
-        "user_name": user_name,
-        "agent_name": agent_name,
+    """Save a prompt transcript to disk."""
+    params_fpath = os.path.join(prompt_dir, prompt_id, "params.json")
+    prompt_fpath = os.path.join(prompt_dir, prompt_id, "prompt.txt")
+    inputs_fpath = os.path.join(prompt_dir, prompt_id, "inputs.json")
+
+    os.makedirs(os.path.dirname(params_fpath), exist_ok=True)
+    json.dump(params, open(params_fpath, "w"))
+    open(prompt, "w").write(prompt_fpath)
+    json.dump(inputs, open(inputs_fpath, "w"), indent=2)
+
+
+def load_prompt(prompt_id: str, prompt_dir: str = "./prompts/") -> dict:
+    """Load a prompt from disk by prompt_id."""
+    params_fpath = os.path.join(prompt_dir, prompt_id, "params.json")
+    prompt_fpath = os.path.join(prompt_dir, prompt_id, "prompt.txt")
+    inputs_fpath = os.path.join(prompt_dir, prompt_id, "inputs.json")
+    return {
+        "params": json.load(open(params_fpath)),
+        "prompt": open(prompt_fpath).read(),
+        "inputs": json.load(open(inputs_fpath)),
     }
-    with open(fpath, "w") as f:
-        json.dump(turns_dict, f)
 
 
-def load_turns(chat_id: str, turns_dir: str) -> Dict:
-    """Load a chat transcript from disk by chat_id."""
-    fpath = os.path.join(turns_dir, chat_id + ".json")
-    with open(fpath) as f:
-        return json.load(f)
+def check_password(debug=False):
+    """Returns `True` if the user had the correct password."""
+    if debug:
+        return True
 
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["password"] == st.secrets["password"]:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # don't store password
+        else:
+            st.session_state["password_correct"] = False
 
-def get_line(line_name: str, user_name: str, agent_name: str):
-    return LINES_TEXT[line_name].format(user_name=user_name, agent_name=agent_name)
-
-
-def get_write_text_fn(speaker_name, prompt_tag):
-    """Get a function that writes text to the console.
-
-    Allows stylizing the CLI interface with colors, html.
-    """
-    style = get_default_style()
-
-    def write_text(text):
-        print(
-            HTML(
-                f"<{prompt_tag}-prompt>{speaker_name}</{prompt_tag}-prompt>: <{prompt_tag}-text>{html.escape(text)}</{prompt_tag}-text>"
-            ),
-            style=style,
+    if "password_correct" not in st.session_state:
+        # First run, show input for password.
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
         )
-
-    return write_text
-
-
-def handle_end_chat(turns_: List[Dict], user_name: str, write_text_fn: Callable):
-    if turns_[-1]["speaker"] == "user":
-        closing_line = get_line(line_name="closing", user_name=user_name)
-        write_text_fn(closing_line)
-
-
-def build_transcript(turns: List[Dict]) -> str:
-    clean_lines = []
-    for turn in turns:
-        text = turn["text"].strip().replace("\n", " ")
-        clean_lines.append(f"{turn['speaker'].capitalize()}: {text}")
-    return "\n".join(clean_lines)
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password not correct, show input + error.
+        st.text_input(
+            "Password", type="password", on_change=password_entered, key="password"
+        )
+        st.error("😕 Password incorrect")
+        return False
+    else:
+        # Password correct.
+        return True
 
 
-def chat_prompt(
-    turns: List[Dict],
-    user_name: str,
-    agent_name: str,
-    prompt_text: str,
-    prompt_config: dict,
-    oai_client: OAIClient
-) -> str:
-    transcript = build_transcript(turns)
-    prompt_text = prompt_text.format(
-        transcript=transcript, user_name=user_name, agent_name=agent_name
-    )
-    logging.debug("Prompt:\n{prompt_text}")
-    result = oai_client.complete(
-        prompt_text, request_tag=f"chat_turn[len(turns)]", **prompt_config
-    )
-    logging.debug("OAI Result:\n{result}")
-    return result["top_answer_text"].strip()
+def sleep_and_return(st_container, time_per_step, num_steps):
+    with st_container:
+        for _ in stqdm(range(num_steps)):
+            time.sleep(time_per_step)
 
 
-def get_prompt_text(prompt_file: str, user_name: str, agent_name: str) -> Tuple[str, str]:
-    """Get the prompt text from a file.
+def init_session_state(widget_keys: List[str], query_params: dict):
+    for key in widget_keys:
+        if query_params.get(key) is not None:
+            query_value = query_params[key][0]
+            if key not in st.session_state:
+                if "bool" in key:
+                    query_value = True if query_value.lower() == "true" else False
+                st.session_state[key] = query_value
 
-    Get the opening line from the top of the file.
 
-    Syntax of the prompt.txt should be:
+def write_query_params(widget_values: Dict[str, str]):
+    query_params = {}
+    for widget_name, widget_value in widget_values.items():
+        session_value = st.session_state.get(widget_name)
+        if "bool" in widget_name and widget_value is False:
+            query_value = session_value if session_value is not None else widget_value
+        else:
+            query_value = widget_value if widget_value is not None else session_value
+        if query_value is not None:
+            query_params[widget_name] = query_value
 
-    <opening line>
-    ######
-    <prompt text>
-
-    Variables {agent_name} and {user_name} will be replaced with the
-    values passed to the chat CLI function.
-    
-    Strip access whitespace at the end, which is known to cause issues.
-    """
-    with open(prompt_file) as f:
-        instructions = f.read()
-    
-    opening_line, prompt_text = instructions.split("######")
-
-    opening_line = opening_line.lstrip("opening_line:").strip()
-    opening_line = opening_line.format(user_name=user_name, agent_name=agent_name)
-
-    return opening_line.strip(), prompt_text.rstrip()
+    st.experimental_set_query_params(**query_params)
