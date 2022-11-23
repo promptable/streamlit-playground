@@ -217,7 +217,7 @@ def main():
         prompt_text = prompt_area.text_area(
             "Prompt",
             value=session.prompt["prompt_text"],
-            height=400,
+            height=300,
             label_visibility="hidden",
             placeholder="Prompt text..",
         )

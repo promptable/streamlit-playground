@@ -2,6 +2,15 @@
 
 (Attempt) to replicate OpenAI playground in Streamlit, but with additional features like running batches of inputs.
 
+### Playground
+
+![Playground](data/playground.png)
+
+### Batch Inputs
+
+![Batch Inputs](data/inputs.png)
+
+
 ## Setup
 
 Requires Python 3.6+. Tested on Mac M1 Python 3.9.

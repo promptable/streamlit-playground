@@ -18,13 +18,14 @@ def inject_inputs(
     prompt_template: str, input_keys: List[str], inputs: Dict[str, Any]
 ) -> str:
     text = prompt_template
-    for field_name in input_keys:
+    for field_name, field_value in inputs.items():
         pattern = re.compile("{{" + field_name + "}}", re.IGNORECASE)
         text = pattern.sub(str(inputs[field_name]), text)
     return text
 
 
 def init_page_layout():
+    st.set_page_config(layout="wide")
     st.markdown(
         """
         <style>
