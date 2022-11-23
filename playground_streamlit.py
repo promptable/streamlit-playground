@@ -1,7 +1,8 @@
-from pathlib import Path
-from typing import List, Dict, Union
+from typing import List, Union
 
-from stqdm import stqdm
+import pandas as pd
+
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 import streamlit as st
 import diskcache
@@ -62,6 +63,58 @@ def create_prompt(
         prompt_dir=prompt_dir,
     )
     return prompt_id
+
+
+def run_completion(
+    oai_client: OAIClient,
+    prompt_text: str,
+    model: str,
+    stop: Union[List[str], None],
+    max_tokens: int,
+    temperature: float,
+):
+    print("Running completion!")
+    if stop:
+        if "double-newline" in stop:
+            stop.remove("double-newline")
+            stop.append("\n\n")
+        if "newline" in stop:
+            stop.remove("newline")
+            stop.append("\n")
+    resp = oai_client.complete(
+        prompt_text,
+        model=model,  # type: ignore
+        max_tokens=max_tokens,  # type: ignore
+        temperature=temperature,
+        stop=stop or None,
+    )
+    return resp
+
+
+def run_all(
+    oai_client: OAIClient,
+    prompt_template: str,
+    model: str,
+    stop: Union[List[str], None],
+    max_tokens: int,
+    temperature: float,
+    inputs_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Run openai completion for all inputs."""
+    for index, row in inputs_df.iterrows():
+        inputs = row.to_dict()
+        prompt_text = utils.inject_inputs(prompt_template, inputs.keys(), inputs)
+        resp = run_completion(
+            oai_client,
+            prompt_text,
+            model,
+            stop,
+            max_tokens,
+            temperature,
+        )
+        inputs_df.loc[index, "output"] = resp["completion"]
+    print(inputs_df)
+    return inputs_df
 
 
 def main():
@@ -170,22 +223,13 @@ def main():
         )
         # TODO(bfortuner): Allow running with CMD + ENTER
         if run_button:
-            print("Running completion!")
-            if stop:
-                if "double-newline" in stop:
-                    stop.remove("double-newline")
-                    stop.append("\n\n")
-                if "newline" in stop:
-                    stop.remove("newline")
-                    stop.append("\n")
-
-            ## COMPLETION
-            resp = oai_client.complete(
-                prompt_text,
+            resp = run_completion(
+                oai_client=oai_client,
+                prompt_text=prompt_text,
                 model=model,  # type: ignore
+                stop=stop,
                 max_tokens=max_tokens,  # type: ignore
                 temperature=temperature,
-                stop=stop or None,
             )
 
             completion_text = st.text_area(
@@ -199,7 +243,42 @@ def main():
             if completion_text:
                 print("Completion Result: \n\n", completion_text)
 
+    inputs_df = None
+    with inputs_tab:
+        uploaded_file = st.file_uploader("Upload Inputs CSV", type="csv")
+        if uploaded_file is not None:
+            inputs_df = pd.read_csv(uploaded_file)
+            session.prompt["inputs"] = inputs_df.to_dict()
+        elif session.prompt.get("inputs"):
+            inputs_df = pd.DataFrame(session.prompt["inputs"])
+
+        if inputs_df is not None:
+            gb = GridOptionsBuilder.from_dataframe(inputs_df)
+            gb.configure_default_column(editable=True)
+            response = AgGrid(
+                inputs_df,
+                gridOptions=gb.build(),
+                fit_columns_on_grid_load=True,
+                allow_unsafe_jscode=True,
+            )
+            print(response["data"])
+            if st.button("Run All", help="Run all inputs"):
+                inputs_df = run_all(
+                    oai_client=oai_client,
+                    inputs_df=response["data"],
+                    prompt_template=prompt_text,
+                    model=model,
+                    stop=stop,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+                st.write(inputs_df)
+
+            # button for "Run Selected"
+            # button for "Save"
+
     if save_button:
+        inputs_dict = inputs_df.to_dict() if inputs_df is not None else {}
         utils.save_prompt(
             prompt_id=prompt_id,
             prompt_text=prompt_text,
@@ -209,7 +288,7 @@ def main():
                 temperature=temperature,
                 stop=stop,
             ),
-            inputs={},
+            inputs=inputs_dict,
             prompt_dir=PROMPT_DIR,
         )
         prompt_name = ""

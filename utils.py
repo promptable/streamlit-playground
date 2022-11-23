@@ -4,13 +4,24 @@ TODO(bfortuner): Add S3 support.
 """
 import json
 import os
+import re
 import shutil
 import time
-from typing import List, Dict
+from typing import Any, List, Dict
 import uuid
 
 import streamlit as st
 from stqdm import stqdm
+
+
+def inject_inputs(
+    prompt_template: str, input_keys: List[str], inputs: Dict[str, Any]
+) -> str:
+    text = prompt_template
+    for field_name in input_keys:
+        pattern = re.compile("{{" + field_name + "}}", re.IGNORECASE)
+        text = pattern.sub(str(inputs[field_name]), text)
+    return text
 
 
 def init_page_layout():
