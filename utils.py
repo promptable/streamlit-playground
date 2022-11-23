@@ -4,12 +4,36 @@ TODO(bfortuner): Add S3 support.
 """
 import json
 import os
+import shutil
 import time
 from typing import List, Dict
 import uuid
 
-import playground_streamlit as st
+import streamlit as st
 from stqdm import stqdm
+
+
+def init_page_layout():
+    st.markdown(
+        """
+        <style>
+        .appview-container .main .block-container{
+            padding-top: 2rem;    
+        }
+        .appview-container .css-1adrfps {
+            padding-top: 1rem;    
+        }
+        .appview-container .css-1oe6wy4 {
+            padding-top: 1rem;    
+        }
+        .cell-wrap-text {
+            white-space: normal !important;
+            font-size: 24px !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def make_prompt_id(prompt_name: str):
@@ -19,7 +43,7 @@ def make_prompt_id(prompt_name: str):
 
 def save_prompt(
     prompt_id: str,
-    prompt: str,
+    prompt_text: str,
     params: dict,
     inputs: dict,
     prompt_dir: str = "./prompts/",
@@ -31,7 +55,7 @@ def save_prompt(
 
     os.makedirs(os.path.dirname(params_fpath), exist_ok=True)
     json.dump(params, open(params_fpath, "w"))
-    open(prompt, "w").write(prompt_fpath)
+    open(prompt_fpath, "w").write(prompt_text)
     json.dump(inputs, open(inputs_fpath, "w"), indent=2)
 
 
@@ -42,9 +66,14 @@ def load_prompt(prompt_id: str, prompt_dir: str = "./prompts/") -> dict:
     inputs_fpath = os.path.join(prompt_dir, prompt_id, "inputs.json")
     return {
         "params": json.load(open(params_fpath)),
-        "prompt": open(prompt_fpath).read(),
+        "prompt_text": open(prompt_fpath).read(),
         "inputs": json.load(open(inputs_fpath)),
     }
+
+
+def delete_prompt(prompt_id: str, prompt_dir: str = "./prompts/"):
+    """Load a prompt from disk by prompt_id."""
+    shutil.rmtree(os.path.join(prompt_dir, prompt_id))
 
 
 def list_prompts(prompt_dir: str = "./prompts/") -> List[str]:

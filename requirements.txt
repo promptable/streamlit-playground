@@ -1,7 +1,7 @@
 diskcache
 python-dotenv
-streamlit==1.13.0
-streamlit-aggrid==0.3.3
+streamlit
+streamlit-aggrid
 stqdm
 openai
 tenacity
