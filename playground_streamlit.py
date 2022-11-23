@@ -72,7 +72,7 @@ def main():
     print("PromptIds: ", prompt_ids)
 
     ## RUN + SAVE PROMPT
-    _, col2, col3, col4 = st.columns([4, 2, 2, 2])
+    col1, col2, col3, col4 = st.columns([4, 2, 2, 2])
     with col2:
         run_button = st.button("Run Prompt", help="Run the prompt")
     with col3:
@@ -86,11 +86,10 @@ def main():
         if "prompt_id" in session:
             prompt_id_index = prompt_ids.index(session.prompt_id)
         prompt_id = st.selectbox(
-            "Prompt",
+            "Select Prompt",
             options=prompt_ids,
             index=prompt_id_index,
             key="prompt_id",
-            label_visibility="hidden",
         )
 
         if not prompt_id:
