@@ -1,0 +1,1 @@
+{"model": "text-davinci-002", "max_tokens": 16, "temperature": 0.75, "stop": ["Assistant:", "Human:"]}

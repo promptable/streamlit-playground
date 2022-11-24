@@ -1,0 +1,4 @@
+Please label the sentences into one of the following categories: IT Support, Coding, Lifestyle, Politics.
+
+Sentence: {{input}}
+Label:

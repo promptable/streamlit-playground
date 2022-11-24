@@ -4,7 +4,6 @@
 .chat_turns
 streamlit_apps
 .vscode
-data/prompts/
 
 # TODO(bfortuner): remove
 anthro*

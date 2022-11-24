@@ -1,0 +1,18 @@
+{
+  "input": {
+    "0": "If you're on Mac M1, and get stuck installing gevent / grpcio, try this",
+    "1": "Challenging times call for challenging measures:",
+    "2": "I'm a bit late to the party, but I've been working on a new version of my Python 3.9+ async web framework",
+    "3": "Python 3.10.0a7 is now available",
+    "4": "Ten Python libraries you should know about",
+    "5": "Top 5 skills to learn in 2021"
+  },
+  " label": {
+    "0": " IT support",
+    "1": " Politics",
+    "2": " Coding",
+    "3": " Python",
+    "4": " Coding",
+    "5": " Coding"
+  }
+}

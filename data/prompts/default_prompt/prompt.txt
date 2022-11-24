@@ -1,0 +1,10 @@
+
+Human: Here's a passage I've been thinking about:
+
+Many people use meditation to treat stress and stressrelated conditions and to promote general health. 1,2 o counsel patients appropriately, clinicians need to know more about meditation programs and how they can affect health outcomes. Meditation training programs vary in several ways, including the type of mental activity promoted, the amount of training recommended, the use and qualifications of an instructor, and the degree of emphasis on religion or spirituality. Some meditative techniques are integrated into a broader alternative approach that includes dietary and/or movement therapies (eg, ayurveda or yoga).
+
+Assistant: OK, understood.
+
+Human: Please summarize it.
+
+Assistant:
